@@ -1,15 +1,4 @@
 import streamlit as st
-import pandas as pd
-from urllib.request import urlopen
-
-import plotly.express as px
-import plotly.graph_objects as go
-from streamlit_option_menu import option_menu
-import json
-import requests
-import pydeck as pdk
-
-from dashboard import dash_page1 
 
 #Layout
 st.set_page_config(
@@ -17,7 +6,20 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded")
 
-#Data Pull and Functions
+from streamlit_option_menu import option_menu
+from dashboard import dash_page1 
+
+#from urllib.request import urlopen
+
+#import plotly.express as px
+#import plotly.graph_objects as go
+
+#import json
+#import requests
+#import pydeck as pdk
+
+
+
 
 st.markdown(
     """
@@ -52,8 +54,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-def my_function():
-    a = 2 + 3
 
 #Options Menu
 with st.sidebar:
@@ -62,15 +62,29 @@ with st.sidebar:
         icons=['gear','eye','bar-chart'],menu_icon='cart', default_index=0)
 
 if selected == "Campaign Settings":
+    st.markdown('<div class="config-box">', unsafe_allow_html=True)
     dash_page1.show()
 
 if selected == "Campaign Overview":
-    st.title("Overview here")
+    st.markdown('<div class="config-box">', unsafe_allow_html=True)
+    st.title("Recommender System Outputs")
+    
+    if 'clusters' in st.session_state:
+        st.subheader("Clusters")
+        st.write(st.session_state['clusters'])
 
+        st.subheader("Probability Matrix")
+        st.write(st.session_state['matrix_proba'])
 
+        st.subheader("Recommendations")
+        st.write(st.session_state['recos'])
 
+        st.subheader("Overall Recall")
+        st.write(f"Overall Recall: {st.session_state['overall_recall']}")
 
+        st.subheader("Stock Availability")
+        st.write(st.session_state['stock_availability'])
 
-
+    
 
 

@@ -1,9 +1,7 @@
 import streamlit as st
 import pandas as pd
 from streamlit_option_menu import option_menu
-
-
-#Data Pull and Functions
+from pipeline import whole_pipeline
 
 st.markdown(
     """
@@ -38,17 +36,12 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-def my_function():
-    a = 2 + 3
-
 #Options Menu
 with st.sidebar:
     selected = option_menu('Your Next Purchase',
                            ["Campaign Settings", 'Campaign Overview','Campaign Performance'], 
         icons=['gear','eye','bar-chart'],menu_icon='cart', default_index=0)
 
-def my_function():
-    a = 2 + 3
 
 def show():
 
@@ -69,10 +62,12 @@ def show():
                 st.session_state.uploaded_data = {}
         
             file_labels = ["Transactions", "Products", "Clients", "Stocks", "Stores"]
+            if 'required_files' not in st.session_state:
+                st.session_state.required_files = file_labels
+            
             upload_status = {label: False for label in file_labels}
 
             uploaded_files = st.file_uploader("Upload Data Files", type=["csv"], key='uploadfiles', accept_multiple_files=True, label_visibility= 'collapsed')
-
 
             if uploaded_files:
                 for uploaded_file in uploaded_files:
@@ -127,15 +122,46 @@ def show():
                 key = 'custLabelselector')
 
         with col2_3:
-            st.slider("Number of Recommendations per Customer", 1, 15, 3, key = 'kSelector')
+            k = st.slider("Number of Recommendations per Customer", 1, 15, 3, key = 'kSelector')
+            st.session_state.k = int(k)
         
         with col2_4:
-            st.number_input("Recommendation Strength (%)", min_value=0.01, max_value=1.0, value=0.5, step=0.1, key='alphaselector')
+            lambda_value = st.number_input("Recommendation Conversion Rate (%)", min_value=0.01, max_value=1.0, value=0.5, step=0.1, key='lambdaSelector')
+            st.session_state.lambda_value = float(lambda_value)
 
     with Hsection_4:
         st.subheader("Generate Campaign")
+
         if st.button('Generate'):
-            result = my_function()
+            
+            # Store input CSVs as dataframes
+            if all(st.session_state.upload_status.get(label, False) for label in st.session_state.required_files):
+                transactions = st.session_state.uploaded_data["Transactions"]
+                products = st.session_state.uploaded_data["Products"]
+                clients = st.session_state.uploaded_data["Clients"]
+                stocks = st.session_state.uploaded_data["Stocks"]
+                stores = st.session_state.uploaded_data["Stores"]
+            
+            # Run the Pipeline
+            # note: def whole_pipeline(transactions, clients, products, stores, stocks, end_date, number_of_recommandations, conversion_rate):
+            
+            st.write(st.session_state.k)
+            st.write(st.session_state.lambda_value)
+            clusters, matrix_proba, recos, overall_recall, stock_availability = whole_pipeline(
+                transactions, clients, products, stores, stocks, 
+                end_date= '2024-11-01',
+                number_of_recommandations = st.session_state.k,
+                conversion_rate = st.session_state.lambda_value
+            )
+
+            # Store the outputs in the session state
+            if 'clusters' not in st.session_state:
+                st.session_state['clusters'] = clusters
+                st.session_state['matrix_proba'] = matrix_proba
+                st.session_state['recos'] = recos
+                st.session_state['overall_recall'] = overall_recall
+                st.session_state['stock_availability'] = stock_availability
+            
             st.write("Campaign Generated Successfully!")
 
 st.markdown('</div>', unsafe_allow_html=True)

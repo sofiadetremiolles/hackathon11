@@ -10,6 +10,9 @@ import xgboost as xgb
 from xgboost import XGBRegressor
 from pulp import LpProblem, LpMaximize, LpVariable, lpSum, PULP_CBC_CMD
 
+import streamlit as st
+import time
+
 # Inputs
 
 #transactions = pd.read_csv("data/transactions.csv")
@@ -22,17 +25,28 @@ number_of_recommandations = 3
 end_date = '2024-11-01'
 
 # Pipeline Master Function
-def whole_pipeline(transactions, clients, products, stores, stocks, end_date, number_of_recommandations, conversion_rate):
+def whole_pipeline(transactions, clients, products, stores, stocks, end_date , number_of_recommandations, conversion_rate):
     
-    transactions_final = transform_to_transactions_final(transactions, clients, products, stores, stocks)
-    clusters = clustering(transactions, clients, products)
-    training_data, test_data, test_data_customers_all_purchased = preprocessing(transactions, clients, products, stores, stocks, clusters, end_date)
-    matrix_proba = pairing_and_training(training_data, test_data)
-    recos = optimize_recommendations_improved(transactions_final, matrix_proba, number_of_recommandations,conversion_rate )
-    grouped_transactions = filter_and_group_transactions(transactions_final, recos)
-    recall_per_customer, overall_recall = compute_recall(recos, grouped_transactions)
-    top_products = get_top_k_products(matrix_proba, number_of_recommandations)
-    stock_availability = count_product_recommendations(top_products, stocks)
+    with st.spinner("Processing Data..."):
+        transactions_final = transform_to_transactions_final(transactions, clients, products, stores, stocks)
+        time.sleep(2)
+    
+    with st.spinner("Identifying Customer Clusters..."):
+        clusters = clustering(transactions, clients, products)
+        time.sleep(2)
+
+    with st.spinner("Training Recommendation Engine..."):
+        training_data, test_data, test_data_customers_all_purchased = preprocessing(transactions, clients, products, stores, stocks, clusters, end_date)
+        matrix_proba = pairing_and_training(training_data, test_data)
+    
+    with st.spinner("Optimizing recommendations for Stock Availability..."):
+        recos = optimize_recommendations_improved(transactions_final, matrix_proba, number_of_recommandations,conversion_rate )
+
+    with st.spinner("Preparing Results..."):
+        grouped_transactions = filter_and_group_transactions(transactions_final, recos)
+        recall_per_customer, overall_recall = compute_recall(recos, grouped_transactions)
+        top_products = get_top_k_products(matrix_proba, number_of_recommandations)
+        stock_availability = count_product_recommendations(top_products, stocks)
     
     return clusters, matrix_proba, recos, overall_recall, stock_availability
 
@@ -134,7 +148,7 @@ def create_train_test(df, end_date='2024-11-01', n_train_week=13, n_predict_week
 
     return train_df, test_df
 
-def process_data(dfTxn):
+def process_data(dfTxn, clusters=None):
     # Date and Quarter Info
     dfTxn['SaleTransactionDate'] = pd.to_datetime(dfTxn['SaleTransactionDate'])
     dfTxn['SaleTransactionQtr'] = dfTxn['SaleTransactionDate'].dt.to_period('Q')
@@ -166,7 +180,6 @@ def process_data(dfTxn):
     # No. of Store Visits
     dfTxn_Merged['SaleTransactionDate'] = pd.to_datetime(dfTxn_Merged['SaleTransactionDate'])
     dfAgg_StoreVisits = dfTxn_Merged.groupby('ClientID', as_index = False).agg(VisitCount = ('SaleTransactionDate', lambda x : x.dt.date.nunique()))
-
 
     # No. of Past Transactions, Median order value, Unique SKUs purchased
     dfAgg_Customer = dfTxn_Merged.groupby('ClientID', as_index= False).agg(
@@ -239,8 +252,8 @@ def preprocessing(transactions, clients, products, stores, stocks, clusters, end
     dfTxn = dfTxn.sort_values(by=['SaleTransactionDate'])
     df_train, df_test = create_train_test(dfTxn, end_date)
 
-    training_data, _ = process_data(df_train)
-    test_data, test_data_customers_all_purchased = process_data(df_test)
+    training_data, _ = process_data(df_train, clusters)
+    test_data, test_data_customers_all_purchased = process_data(df_test, clusters)
 
     return training_data, test_data, test_data_customers_all_purchased
 

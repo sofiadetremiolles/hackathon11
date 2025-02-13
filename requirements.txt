@@ -1,5 +1,9 @@
 pandas==2.2.3
+numpy==2.2.2
 plotly==6.0.0
 streamlit==1.42.0
 utils==1.0.2
 streamlit_option_menu==0.3.2
+xgboost==2.1.4
+pulp==2.9.0
+scikit-learn==1.6.1
