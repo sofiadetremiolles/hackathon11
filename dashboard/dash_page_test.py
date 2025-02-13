@@ -86,11 +86,11 @@ def show():
             post_df_exploded = post_df.explode('recommended_products')
             post_product_counts = post_df_exploded['recommended_products'].value_counts().reset_index()
             post_product_counts.columns = ['ProductID', 'Post_Count']
-
+            print(post_product_counts.head())
             # Step 2: Process Pre-Optimization Data
             pre_df = pre_df.iloc[:, :2]  # Keep only first two columns
             pre_df = pre_df.rename(columns={'ProductID': 'ProductID', 'times_recommended': 'Pre_Count'})
-
+            print(pre_df.head())
             # Ensure 'ProductID' columns in both DataFrames are of the same type (e.g., str)
             pre_df['ProductID'] = pre_df['ProductID'].astype(str)
             post_product_counts['ProductID'] = post_product_counts['ProductID'].astype(str)
@@ -100,9 +100,8 @@ def show():
 
             # Step 3: Merge Pre and Post Data
             merged_df = pd.merge(pre_df, post_product_counts, on="ProductID", how="left")  # 'inner' keeps common products
-
+            
             st.write(merged_df)
-
             # Step 4: Calculate Customer Loss
             merged_df["Difference"] = merged_df["Pre_Count"] - merged_df["Post_Count"]
 
