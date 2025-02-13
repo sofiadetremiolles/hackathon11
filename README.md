@@ -1,5 +1,5 @@
-# hackathon11
-Code for the DSBA Eleven Strategy Hackathon 
+# hackathon
+Code for the DSBA Eleven Strategy Hackathon Group 2
 
 # Marketing Campaign Planner (Proof of Concept)
 
@@ -24,10 +24,9 @@ streamlit run app.py
 **Important:** The app may initially show a `streamlit.errors.StreamlitDuplicateElementId` error. Simply refresh the page to proceed.
 
 ## Features
-Once the app is running, you will have access to three tabs:
+Once the app is running, you will have access to two tabs:
 1. **Campaign Settings** – Upload data and configure campaign parameters.
 2. **Campaign Overview** – View campaign details.
-3. **Campaign Performance** – Analyze campaign results.
 
 ## How to Run a Campaign
 ### Step 1: Upload Data
