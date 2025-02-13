@@ -30,7 +30,22 @@ if selected == "Campaign Settings":
 
 if selected == "Campaign Overview":
     st.markdown('<div class="config-box">', unsafe_allow_html=True)
-    dash_page2.show()
+    
+    if 'clusters' in st.session_state:
+        st.subheader("Clusters")
+        st.write(st.session_state['clusters'])
+
+        st.subheader("Probability Matrix")
+        st.write(st.session_state['matrix_proba'])
+
+        st.subheader("Recommendations")
+        st.write(st.session_state['recos'])
+
+        st.subheader("Overall Recall")
+        st.write(f"Overall Recall: {st.session_state['overall_recall']}")
+
+        st.subheader("Stock Availability")
+        st.write(st.session_state['stock_availability'])
 
 
 
