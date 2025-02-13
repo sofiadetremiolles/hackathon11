@@ -30,21 +30,8 @@ if selected == "Campaign Settings":
 
 if selected == "Campaign Overview":
     st.markdown('<div class="config-box">', unsafe_allow_html=True)
-    
-    #Temporary output
-    if 'clusters' in st.session_state:
-        st.subheader("Customer Segment Assignment")
-        st.write(st.session_state['clusters'])
+    dash_page2.show()
 
-        st.subheader("Product Recommendations")
-        st.write(st.session_state['recos'])
-
-        st.subheader("Overall Recall")
-        st.write(f"Overall Recall: {st.session_state['overall_recall']}")
-
-if selected == "##TEST PAGE":
-    st.markdown('<div class="config-box">', unsafe_allow_html=True)
-    dash_page_test.show()
 
 
     
