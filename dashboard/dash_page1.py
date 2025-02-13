@@ -115,8 +115,6 @@ def show():
             # Run the Pipeline
             # note: def whole_pipeline(transactions, clients, products, stores, stocks, end_date, number_of_recommandations, conversion_rate):
             
-            st.write(st.session_state.k)
-            st.write(st.session_state.lambda_value)
             clusters, matrix_proba, recos, overall_recall, stock_availability = whole_pipeline(
                 transactions, clients, products, stores, stocks, 
                 end_date= '2024-11-01',
