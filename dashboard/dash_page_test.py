@@ -2,7 +2,9 @@ import streamlit as st
 import pandas as pd
 from streamlit_option_menu import option_menu
 from pipeline import whole_pipeline
-import plotly as px
+import plotly.express as px
+import ast
+import matplotlib.pyplot as plt
 
 st.markdown(
     """
@@ -37,21 +39,17 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-#Options Menu
-with st.sidebar:
-    selected = option_menu('Your Next Purchase',
-                           ["Campaign Settings", 'Campaign Overview','Campaign Performance'], 
-        icons=['gear','eye','bar-chart'],menu_icon='cart', default_index=0)
+
 
 
 def show():
 
+    Hsection_0 = st.container()
     Hsection_1 = st.container()
-   
+    Hsection_2 = st.container()
    
 
-    with Hsection_1:
-
+    with Hsection_0:
         # Upload model outputs
         output_files = st.file_uploader("Test Files (Model Outputs)", type=["csv"], key='uploadoutputfiles', 
                                         accept_multiple_files=True, label_visibility= 'collapsed')
@@ -66,86 +64,79 @@ def show():
                     file_label = "recos_test"
                 elif "stock_availability" in file_name.lower():
                     file_label = "stock_availability_test"
+                elif "transactions" in file_name.lower():
+                    file_label = "transactions"
+                elif "products" in file_name.lower():
+                    file_label = "products"
                 else:
                     file_label = "Unknown"
         
                 st.session_state.output_files[file_label] = pd.read_csv(uploaded_file)
         
         st.write(st.session_state.output_files['recos_test'])
+        st.write(st.session_state.output_files['stock_availability_test'])
+    
+    with Hsection_1:
+
+
+        def map_recommendations(products_df, recos_df):
+            # Explode the recommended products so each product is in a separate row
+            recos_df = recos_df.copy()
+            recos_df['recommended_products'] = recos_df['recommended_products'].apply(ast.literal_eval)  # Convert string to list
+            recos_exploded = recos_df.explode('recommended_products')
+            
+            # Convert to numeric for merging
+            recos_exploded['recommended_products'] = pd.to_numeric(recos_exploded['recommended_products'])
+            products_df['ProductID'] = pd.to_numeric(products_df['ProductID'])
+            
+            # Merge to bring in FamilyLevel1 and FamilyLevel2
+            merged_df = recos_exploded.merge(products_df, left_on='recommended_products', right_on='ProductID', how='left')
+            
+            # Create Product column using FamilyLevel1 and the first word of FamilyLevel2
+            merged_df['Product'] = merged_df['FamilyLevel2'].str.split().str[0] + ' ' + merged_df['FamilyLevel1'] + ' ' + merged_df['Universe']
+            
+            # Select relevant columns
+            result_df = merged_df[['CustomerID', 'recommended_products', 'Product']]
+            
+            # Create a horizontal bar chart showing the number of customers per product
+            product_counts = result_df['Product'].value_counts()
+            fig, ax = plt.subplots(figsize=(10, 6))
+            product_counts.plot(kind='barh', color='skyblue', ax=ax)
+            ax.set_xlabel("Number of Customers")
+            ax.set_ylabel("Product")
+            ax.set_title("Number of Customers Recommended Each Product")
+            ax.invert_yaxis()
+    
+            # Display chart in Streamlit
+            st.pyplot(fig)
+    
+            return result_df
         
-        def analyze_pre_post_opti(pre_df, post_df):
-            """
-            Streamlit version:
-            - Extracts product recommendation counts from post-optimization data.
-            - Merges it with pre-optimization data.
-            - Compares pre vs. post-optimization results.
-            - Visualizes the changes with an interactive horizontal bar chart using Plotly.
-            """
-
-            # Step 1: Extract Post-Optimization Product Counts
-            post_df_exploded = post_df.explode('recommended_products')
-            post_product_counts = post_df_exploded['recommended_products'].value_counts().reset_index()
-            post_product_counts.columns = ['ProductID', 'Post_Count']
-            print(post_product_counts.head())
-            # Step 2: Process Pre-Optimization Data
-            pre_df = pre_df.iloc[:, :2]  # Keep only first two columns
-            pre_df = pre_df.rename(columns={'ProductID': 'ProductID', 'times_recommended': 'Pre_Count'})
-            print(pre_df.head())
-            # Ensure 'ProductID' columns in both DataFrames are of the same type (e.g., str)
-            pre_df['ProductID'] = pre_df['ProductID'].astype(str)
-            post_product_counts['ProductID'] = post_product_counts['ProductID'].astype(str)
-
-            st.write(pre_df)
-            st.write(post_product_counts)
-
-            # Step 3: Merge Pre and Post Data
-            merged_df = pd.merge(pre_df, post_product_counts, on="ProductID", how="left")  # 'inner' keeps common products
-            
-            st.write(merged_df)
-            # Step 4: Calculate Customer Loss
-            merged_df["Difference"] = merged_df["Pre_Count"] - merged_df["Post_Count"]
-
-            # Step 5: Compute KPI (Average Customer Loss)
-            avg_loss_per_product = merged_df["Difference"].mean()
-
-            # Step 6: Sort by Pre_Count in Descending Order
-            merged_df = merged_df.sort_values(by="Pre_Count", ascending=False)
-
-            # Streamlit UI
-            st.title("📊 Pre vs Post Optimization Analysis")
-
-            # Show KPI
-            st.metric("📉 Average Customer Loss per Product", f"{avg_loss_per_product:.2f}")
-
-            # Show Dataframe
-            st.subheader("📋 Merged Data Preview")
-            st.dataframe(merged_df)
-
-            # Step 7: Visualization - Horizontal Bar Chart using Plotly
-            st.subheader("📊 Pre vs Post Optimization: Customer Recommendations per Product")
-            
-            fig = px.bar(
-                merged_df,
-                y="ProductID",
-                x=["Pre_Count", "Post_Count"],
-                orientation="h",
-                barmode="group",
-                title="Pre vs Post Optimization: Customer Recommendations per Product",
-                labels={"value": "Number of Customers Recommended", "ProductID": "Product ID"},
-                color_discrete_map={"Pre_Count": "#0D47A1", "Post_Count": "#64B5F6"},  # Dark Blue & Light Blue
-            )
-            
-            fig.update_yaxes(categoryorder="total ascending")  # Ensures highest values on top
-            st.plotly_chart(fig, use_container_width=True)
-
-            return merged_df, avg_loss_per_product
+        results_file = map_recommendations(st.session_state.output_files['products'], st.session_state.output_files['recos_test'])
         
-        if "recos_test" in st.session_state.output_files:
-            analyze_pre_post_opti(st.session_state.output_files['stock_availability_test'], st.session_state.output_files['recos_test'])
+        st.write(results_file)
+
+        @st.cache_data
+        def convert_df_to_csv(df):
+            return df.to_csv(index=False).encode('utf-8')
+        
+        csv = convert_df_to_csv(results_file)
+
+        # Download button
+        st.download_button(
+            label="Download data as CSV",
+            data=csv,
+            file_name='data.csv',
+            mime='text/csv',
+        )
+    
+
+
+
+        
  
 
 
-        
 
 st.markdown('</div>', unsafe_allow_html=True)
 

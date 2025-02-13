@@ -7,3 +7,4 @@ streamlit_option_menu==0.3.2
 xgboost==2.1.4
 pulp==2.9.0
 scikit-learn==1.6.1
+matplotlib==3.10.0
