@@ -7,7 +7,7 @@ st.set_page_config(
     initial_sidebar_state="expanded")
 
 from streamlit_option_menu import option_menu
-from dashboard import dash_page1 
+from dashboard import dash_page1 , dash_page_test
 
 #from urllib.request import urlopen
 
@@ -58,7 +58,7 @@ st.markdown(
 #Options Menu
 with st.sidebar:
     selected = option_menu('Your Next Purchase',
-                           ["Campaign Settings", 'Campaign Overview','Campaign Performance'], 
+                           ["Campaign Settings", 'Campaign Overview','##TEST PAGE'], 
         icons=['gear','eye','bar-chart'],menu_icon='cart', default_index=0)
 
 if selected == "Campaign Settings":
@@ -84,6 +84,11 @@ if selected == "Campaign Overview":
 
         st.subheader("Stock Availability")
         st.write(st.session_state['stock_availability'])
+
+if selected == "##TEST PAGE":
+    st.markdown('<div class="config-box">', unsafe_allow_html=True)
+    dash_page_test.show()
+
 
     
 
