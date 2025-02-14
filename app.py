@@ -16,8 +16,8 @@ apply_theme()
 #Options Menu
 with st.sidebar:
     selected = option_menu('Your Next Purchase',
-                           ["Campaign Settings", 'Campaign Overview','##TEST PAGE'], 
-        icons=['gear','eye','bar-chart'],menu_icon='cart', default_index=0
+                           ["Campaign Settings", 'Campaign Overview'], 
+        icons=['gear','eye'],menu_icon='cart', default_index=0
         
     )
 
@@ -32,20 +32,9 @@ if selected == "Campaign Overview":
     st.markdown('<div class="config-box">', unsafe_allow_html=True)
     
     if 'clusters' in st.session_state:
-        st.subheader("Clusters")
-        st.write(st.session_state['clusters'])
-
-        st.subheader("Probability Matrix")
-        st.write(st.session_state['matrix_proba'])
-
-        st.subheader("Recommendations")
-        st.write(st.session_state['recos'])
-
-        st.subheader("Overall Recall")
-        st.write(f"Overall Recall: {st.session_state['overall_recall']}")
-
-        st.subheader("Stock Availability")
-        st.write(st.session_state['stock_availability'])
+        dash_page2.show()
+    else:
+        st.markdown("<span style='color: grey'>Generate a campaign to view outputs.</span>", unsafe_allow_html=True)
 
 
 

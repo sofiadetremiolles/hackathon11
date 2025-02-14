@@ -6,6 +6,7 @@ from dashboard.styles import apply_theme
 
 apply_theme()
 
+
 #Options Menu
 with st.sidebar:
     selected = option_menu('Your Next Purchase',
@@ -22,8 +23,8 @@ def show():
 
     # 1. Data Uploader
     with Hsection_1:
-        
-        st.markdown('<div class="config-box">', unsafe_allow_html=True) 
+        st.markdown("<style>div.block-container {padding-top: 2rem;}</style>", unsafe_allow_html=True)
+        #st.markdown('<div class="config-box">', unsafe_allow_html=True) 
         col1, col2 = st.columns(2)
         
         with col1:
@@ -63,14 +64,17 @@ def show():
                 
     # 2b. File upload status
     with Hsection_2:
+        st.markdown("<span style='color: grey'>File Upload Checklist:</span>", unsafe_allow_html=True)
         cols = st.columns(len(file_labels)) 
         for idx, file_label in enumerate(file_labels):
             with cols[idx]:
                 is_uploaded = upload_status.get(file_label, False)
                 st.checkbox(f"{file_label}.csv", value=is_uploaded, disabled=True, key=f"{file_label}_status")
 
+    
     # 3. Campaign Settings     
     with Hsection_3:
+        st.markdown("<br>", unsafe_allow_html=True)
         st.subheader("Adjust Campaign Parameters")
 
         col2_1, col2_2, col2_3, col2_4 = st.columns(4)
@@ -99,7 +103,9 @@ def show():
             lambda_value = st.number_input("Recommendation Conversion Rate (%)", min_value=0.01, max_value=1.0, value=0.5, step=0.1, key='lambdaSelector')
             st.session_state.lambda_value = float(lambda_value)
 
+    
     with Hsection_4:
+        st.markdown("<br>", unsafe_allow_html=True)
         st.subheader("Generate Campaign")
 
         if st.button('Generate'):
